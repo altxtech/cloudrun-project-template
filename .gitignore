@@ -24,3 +24,8 @@ go.work
 #Opentofu stuff
 *.tfvars
 *.terraform*
+
+
+# some folder
+tmp
+creds
