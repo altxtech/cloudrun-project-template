@@ -30,7 +30,7 @@ resource "google_cloud_run_service" "example_service" {
   template {
     spec {
       containers {
-        image = "us-central1-docker.pkg.dev/titanium-tape-397220/cloud-run-source-deploy/hello-test:latest" # Replace with your Docker image URL
+        image = "us-central1-docker.pkg.dev/titanium-tape-397220/quickstart-docker-repo/hello-test:latest" # Replace with your Docker image URL
       }
     }
   }

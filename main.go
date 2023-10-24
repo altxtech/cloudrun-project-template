@@ -11,7 +11,7 @@ func helloWorld(c *gin.Context){
 }
 
 func main() {
-	log.Println("Hello world")
+	log.Println("Hello there. This is the updated version.")
 	
 	app := gin.Default()
 	app.GET("/", helloWorld)
