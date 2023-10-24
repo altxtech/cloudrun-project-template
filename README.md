@@ -1,2 +1,7 @@
 # cloudrun-project-template
-This a template project for google cloud run projects. Requirements:
+This a template project for google cloud run projects.  
+
+## Objectives  
+- Deployed with IaC (terraform)
+- App container gets built, pushed to ACR and a new revision of the app is deployed
+- Support for multiple environments (dev, prod, staging, temp, etc...)
