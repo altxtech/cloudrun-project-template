@@ -71,7 +71,7 @@ data "google_iam_policy" "secret_access" {
   binding {
     role = "roles/secretmanager.secretAccessor"
     members = [
-      "serviceAccount:${google_service_account.sa.name}",
+      "serviceAccount:${google_service_account.sa.email}",
     ]
   }
 }
@@ -97,11 +97,11 @@ resource "google_project_iam_binding" "db_access" {
   project = var.project_id
   role    = "roles/datastore.user"
   members = [
-    "serviceAccount:${google_service_account.sa.name}",
+    "serviceAccount:${google_service_account.sa.email}",
   ]
   condition {
     title      = "Limited to the proper database"
-    expression = "resource.name=${google_firestore_database.database.id}"
+    expression = "resource.name==\"${google_firestore_database.database.id}\""
   }
 }
 
@@ -126,9 +126,18 @@ resource "google_cloud_run_service" "app" {
   template {
     spec {
       containers {
-        image = "${google_artifact_registry_repository.repo.id}/${var.service_name}:latest"
+
+        /*
+		The artifact registry repository will be empty after the first deployment
+		Therefore, we need to deploy the service with a dummy image (hello).dynamic
+
+		The steps to build, push and deploy the image should be done after the infra
+		is set up
+	*/
+
+        image = "us-docker.pkg.dev/cloudrun/container/hello"
         volume_mounts {
-          name       = "projects/${var.project_id}/secrets/${var.secret_name}"
+          name       = "secret"
           mount_path = "/mnt/secrets/${var.secret_name}"
         }
         env {
@@ -136,7 +145,13 @@ resource "google_cloud_run_service" "app" {
           value = var.env
         }
       }
-      service_account_name = google_service_account.sa.name
+      service_account_name = google_service_account.sa.email
+      volumes {
+        name = "secret"
+        secret {
+          secret_name = var.secret_name
+        }
+      }
     }
   }
 }
@@ -155,7 +170,7 @@ data "google_iam_policy" "noauth" {
 }
 
 resource "google_cloud_run_service_iam_policy" "noauth" {
-  location = var.location
+  location = var.region
   project  = var.project_id
   service  = google_cloud_run_service.app.name
 
