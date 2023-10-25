@@ -93,16 +93,15 @@ resource "google_firestore_database" "database" {
 }
 
 # Give service account access to the database
-data "google_iam_policy" "db_access" {
-  binding {
-    role = "roles/datastore.user"
-    members = [
-      "serviceAccount:${google_service_account.sa.name}",
-    ]
-    condition {
-      title      = "Limited to the proper database"
-      expression = "resource.name=${google_firestore_database.id}"
-    }
+resource "google_project_iam_binding" "db_access" {
+  project = var.project_id
+  role    = "roles/datastore.user"
+  members = [
+    "serviceAccount:${google_service_account.sa.name}",
+  ]
+  condition {
+    title      = "Limited to the proper database"
+    expression = "resource.name=${google_firestore_database.id}"
   }
 }
 
