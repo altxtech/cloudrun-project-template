@@ -79,7 +79,7 @@ data "google_iam_policy" "secret_access" {
 resource "google_secret_manager_secret_iam_policy" "policy" {
   project     = var.project_id
   secret_id   = var.secret_id
-  policy_data = data.google_iam_policy.admin.policy_data
+  policy_data = data.google_iam_policy.secret_access.policy_data
 }
 
 
@@ -101,7 +101,7 @@ resource "google_project_iam_binding" "db_access" {
   ]
   condition {
     title      = "Limited to the proper database"
-    expression = "resource.name=${google_firestore_database.id}"
+    expression = "resource.name=${google_firestore_database.database.id}"
   }
 }
 
@@ -127,16 +127,16 @@ resource "google_cloud_run_service" "app" {
     spec {
       containers {
         image = "${google_artifact_registry_repository.repo.id}/${var.service_name}:latest"
+        volume_mounts {
+          name       = var.secret_name
+          mount_paht = "/mnt/secrets/${var.secret_name}"
+        }
+        env {
+          name  = "ENV"
+          value = var.env
+        }
       }
       service_account_name = google_service_account.sa.name
-    }
-    volume_mounts {
-      name       = var.secret_name
-      mount_paht = "/mnt/secrets/${var.secret_name}"
-    }
-    env {
-      name  = "ENV"
-      value = var.env
     }
   }
 }
@@ -145,10 +145,19 @@ resource "google_cloud_run_service" "app" {
 # DELETE THIS
 # Set proper permissions for production
 
+data "google_iam_policy" "noauth" {
+  binding {
+    role = "roles/run.invoker"
+    members = [
+      "allUsers",
+    ]
+  }
+}
+
 resource "google_cloud_run_service_iam_policy" "noauth" {
-  location = google_cloud_run_service.default.location
-  project  = google_cloud_run_service.default.project
-  service  = google_cloud_run_service.default.name
+  location = var.location
+  project  = var.project_id
+  service  = google_cloud_run_service.app.name
 
   policy_data = data.google_iam_policy.noauth.policy_data
 }
