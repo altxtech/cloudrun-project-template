@@ -45,7 +45,7 @@ variable "env" {
   default     = "dev"
 }
 
-variable "secret_id" {
+variable "secret_name" {
   description = "Name of the secret to mount to the app"
 }
 
@@ -78,7 +78,7 @@ data "google_iam_policy" "secret_access" {
 
 resource "google_secret_manager_secret_iam_policy" "policy" {
   project     = var.project_id
-  secret_id   = var.secret_id
+  secret_id   = "projects/${var.project_id}/secrets/${var.secret_name}"
   policy_data = data.google_iam_policy.secret_access.policy_data
 }
 
@@ -128,8 +128,8 @@ resource "google_cloud_run_service" "app" {
       containers {
         image = "${google_artifact_registry_repository.repo.id}/${var.service_name}:latest"
         volume_mounts {
-          name       = var.secret_name
-          mount_paht = "/mnt/secrets/${var.secret_name}"
+          name       = "projects/${var.project_id}/secrets/${var.secret_name}"
+          mount_path = "/mnt/secrets/${var.secret_name}"
         }
         env {
           name  = "ENV"
@@ -164,5 +164,5 @@ resource "google_cloud_run_service_iam_policy" "noauth" {
 
 # Output the service URL
 output "service_url" {
-  value = google_cloud_run_service.example_service.status[0].url
+  value = google_cloud_run_service.app.status[0].url
 }
