@@ -49,6 +49,10 @@ variable "secret_name" {
   description = "Name of the secret to mount to the app"
 }
 
+variable "image" {
+  description = "Image to deploy"
+}
+
 # Configure the Google Cloud provider
 provider "google" {
   project = var.project_id
@@ -105,18 +109,8 @@ resource "google_project_iam_binding" "db_access" {
   }
 }
 
-# How to bind the policy?
 
-# 2.4 REPOSITORY
-# Delete this block if you intend to pull images from somewhere else
-resource "google_artifact_registry_repository" "repo" {
-  location      = var.region
-  repository_id = "${var.service_name}-${var.env}"
-  description   = "Repository for Cloud Run Images"
-  format        = "DOCKER"
-}
-
-# 2.5 SERVICE
+# 2.6 SERVICE
 
 # Define a Google Cloud Run service
 resource "google_cloud_run_service" "app" {
@@ -135,7 +129,7 @@ resource "google_cloud_run_service" "app" {
 		is set up
 	*/
 
-        image = "us-docker.pkg.dev/cloudrun/container/hello"
+        image = var.image
         volume_mounts {
           name       = "secret"
           mount_path = "/mnt/secrets/${var.secret_name}"
