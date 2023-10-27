@@ -23,7 +23,6 @@ terraform {
   }
 }
 
-
 # 1 VARIABLES
 
 variable "project_id" {
@@ -89,10 +88,11 @@ resource "google_secret_manager_secret_iam_policy" "policy" {
 # 2.3 DATABASE
 
 resource "google_firestore_database" "database" {
-  project     = var.project_id
-  name        = "${var.service_name}-${var.env}-db"
-  location_id = var.region
-  type        = "FIRESTORE_NATIVE"
+  project                 = var.project_id
+  name                    = "${var.service_name}-${var.env}-db"
+  location_id             = var.region
+  type                    = "FIRESTORE_NATIVE"
+  delete_protection_state = var.ENV == "prod" ? "DELETE_PROTECTION_ENABLED" : "DELETE_PROTECTION_DISABLED"
 }
 
 # Give service account access to the database
