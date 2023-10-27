@@ -92,17 +92,17 @@ jobs:
           docker build -t "${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}" ./
           docker push "${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}"
 
-      # END - Docker auth and build
+      # END - Docker auth and Build
 
-      - name: Deploy to Cloud Run
-        id: deploy
-        uses: google-github-actions/deploy-cloudrun@v0
-        with:
-          service: ${{ vars.SERVICE }}
-          region: ${{ vars.REGION }}
-          # NOTE: If using a pre-built image, update the image name here
-          image: ${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}
+      - name: Tofu Setup
+        uses: opentofu/setup-opentofu@v1
 
-      # If required, use the Cloud Run url output in later steps
-      - name: Show Output
-        run: echo ${{ steps.deploy.outputs.url }}
+      - name: Tofu Init
+        run: tofu init
+
+      - name: Tofu Plan
+        run: tofu plan --var "project_id=${{ vars.PROJECT_ID }}" --var "region=${{ vars.REGION }}" --var "service_name=${{ vars.SERVICE }}" --var "env=${{ vars.env }}" --var "secret_name=${{ vars.secret_name }}" --var "image=${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}" --out tofu-plan
+
+      - name: Tofu Apply
+        run: tofu apply tofu-plan
+

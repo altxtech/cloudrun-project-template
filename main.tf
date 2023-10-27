@@ -23,7 +23,6 @@ terraform {
   }
 }
 
-
 # 1 VARIABLES
 
 variable "project_id" {
@@ -32,12 +31,11 @@ variable "project_id" {
 
 variable "region" {
   description = "Google Cloud region"
-  default     = "us-central1"
+  default     = "us-west1"
 }
 
 variable "service_name" {
   description = "Name of the service. Defines the resource names of both the AR repository and Cloud Run service."
-  default     = "us-central1"
 }
 
 variable "env" {
@@ -90,10 +88,11 @@ resource "google_secret_manager_secret_iam_policy" "policy" {
 # 2.3 DATABASE
 
 resource "google_firestore_database" "database" {
-  project     = var.project_id
-  name        = "${var.service_name}-${var.env}-db"
-  location_id = "nam5"
-  type        = "FIRESTORE_NATIVE"
+  project                 = var.project_id
+  name                    = "${var.service_name}-${var.env}-db"
+  location_id             = var.region
+  type                    = "FIRESTORE_NATIVE"
+  delete_protection_state = var.env == "prod" ? "DELETE_PROTECTION_ENABLED" : "DELETE_PROTECTION_DISABLED"
 }
 
 # Give service account access to the database
