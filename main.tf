@@ -92,7 +92,7 @@ resource "google_firestore_database" "database" {
   name                    = "${var.service_name}-${var.env}-db"
   location_id             = var.region
   type                    = "FIRESTORE_NATIVE"
-  delete_protection_state = var.ENV == "prod" ? "DELETE_PROTECTION_ENABLED" : "DELETE_PROTECTION_DISABLED"
+  delete_protection_state = var.env == "prod" ? "DELETE_PROTECTION_ENABLED" : "DELETE_PROTECTION_DISABLED"
 }
 
 # Give service account access to the database
