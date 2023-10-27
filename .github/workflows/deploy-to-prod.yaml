@@ -99,7 +99,9 @@ jobs:
 
       - name: Tofu Init
         run: tofu init
-      - run: tofu workspace select --or-create ${{ vars.ENV }}
+      
+      - name: Tofu Select Workspace
+        run: tofu workspace select --or-create ${{ vars.ENV }}
 
       - name: Tofu Plan
         run: tofu plan --var "project_id=${{ vars.PROJECT_ID }}" --var "region=${{ vars.REGION }}" --var "service_name=${{ vars.SERVICE }}" --var "env=${{ vars.env }}" --var "secret_name=${{ vars.secret_name }}" --var "image=${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}" --out tofu-plan
