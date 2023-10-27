@@ -32,12 +32,11 @@ variable "project_id" {
 
 variable "region" {
   description = "Google Cloud region"
-  default     = "us-central1"
+  default     = "us-west1"
 }
 
 variable "service_name" {
   description = "Name of the service. Defines the resource names of both the AR repository and Cloud Run service."
-  default     = "us-central1"
 }
 
 variable "env" {
@@ -92,7 +91,7 @@ resource "google_secret_manager_secret_iam_policy" "policy" {
 resource "google_firestore_database" "database" {
   project     = var.project_id
   name        = "${var.service_name}-${var.env}-db"
-  location_id = "nam5"
+  location_id = var.region
   type        = "FIRESTORE_NATIVE"
 }
 
