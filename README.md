@@ -19,6 +19,3 @@ gcloud artifacts repositories create --repository-format docker --location <loca
 - PROJECT_ID - ID of the GCP project
 - REGION - Region where the app will be deployed to (eg. us-central1)
 - SERVICE - A name for your app
-
-
-Update readme
