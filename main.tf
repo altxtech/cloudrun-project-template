@@ -43,10 +43,6 @@ variable "env" {
   default     = "dev"
 }
 
-variable "secret_name" {
-  description = "Name of the secret to mount to the app"
-}
-
 variable "image" {
   description = "Image to deploy"
 }
@@ -69,6 +65,20 @@ resource "google_service_account" "sa" {
 
 # 2.2 SECRET
 
+resource "google_secret_manager_secret" "secret" {
+  secret_id = "${var.service_name}-${var.env}-secret"
+
+  replication {
+	  auto{}
+  }
+}
+
+resource "google_secret_manager_secret_version" "secret-version" {
+  secret = google_secret_manager_secret.secret.id
+
+  secret_data = "secret-data"
+}
+
 data "google_iam_policy" "secret_access" {
   binding {
     role = "roles/secretmanager.secretAccessor"
@@ -80,7 +90,7 @@ data "google_iam_policy" "secret_access" {
 
 resource "google_secret_manager_secret_iam_policy" "policy" {
   project     = var.project_id
-  secret_id   = "projects/${var.project_id}/secrets/${var.secret_name}"
+  secret_id   = google_secret_manager_secret.secret.name
   policy_data = data.google_iam_policy.secret_access.policy_data
 }
 
@@ -120,38 +130,30 @@ resource "google_cloud_run_service" "app" {
     spec {
       containers {
 
-        /*
-		The artifact registry repository will be empty after the first deployment
-		Therefore, we need to deploy the service with a dummy image (hello).dynamic
-
-		The steps to build, push and deploy the image should be done after the infra
-		is set up
-	*/
-
         image = var.image
-        volume_mounts {
-          name       = "secret"
-          mount_path = "/mnt/secrets/${var.secret_name}"
-        }
         env {
           name  = "ENV"
           value = var.env
         }
-      }
-      service_account_name = google_service_account.sa.email
-      volumes {
-        name = "secret"
-        secret {
-          secret_name = var.secret_name
+        env {
+          name  = "DATABASE_ID"
+          value = google_firestore_database.database.id
+        }
+        env {
+          name  = "SECRET_ID"
+          value = google_secret_manager_secret.secret.id
         }
       }
+      service_account_name = google_service_account.sa.email
     }
   }
 }
 
+/*
 # 2.6 EXPOSE THE SERVICE
-# DELETE THIS
-# Set proper permissions for production
+
+# This block will make the service public
+# Uncomment this block for public facing services or testing enviroments
 
 data "google_iam_policy" "noauth" {
   binding {
@@ -174,3 +176,4 @@ resource "google_cloud_run_service_iam_policy" "noauth" {
 output "service_url" {
   value = google_cloud_run_service.app.status[0].url
 }
+*/
