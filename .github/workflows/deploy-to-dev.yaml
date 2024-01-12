@@ -63,7 +63,7 @@ jobs:
 
       - name: Google Auth
         id: auth
-        uses: 'google-github-actions/auth@v0'
+        uses: 'google-github-actions/auth@v2'
         with:
           token_format: 'access_token'
           workload_identity_provider: '${{ secrets.WIF_PROVIDER }}' # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
@@ -104,7 +104,7 @@ jobs:
         run: tofu workspace select --or-create ${{ vars.env }}
 
       - name: Tofu Plan
-        run: tofu plan --var "project_id=${{ vars.PROJECT_ID }}" --var "region=${{ vars.REGION }}" --var "service_name=${{ vars.SERVICE }}" --var "env=${{ vars.env }}" --var "secret_name=${{ vars.secret_name }}" --var "image=${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}" --out tofu-plan
+        run: tofu plan --var "project_id=${{ vars.PROJECT_ID }}" --var "region=${{ vars.REGION }}" --var "service_name=${{ vars.SERVICE }}" --var "env=${{ vars.env }}" --var "image=${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}" --out tofu-plan
 
       - name: Tofu Apply
         run: tofu apply tofu-plan
