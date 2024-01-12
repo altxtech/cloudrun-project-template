@@ -73,6 +73,12 @@ resource "google_secret_manager_secret" "secret" {
   }
 }
 
+resource "google_secret_manager_secret_version" "secret-version" {
+  secret = google_secret_manager_secret.secret.id
+
+  secret_data = "secret-data"
+}
+
 data "google_iam_policy" "secret_access" {
   binding {
     role = "roles/secretmanager.secretAccessor"
@@ -125,10 +131,6 @@ resource "google_cloud_run_service" "app" {
       containers {
 
         image = var.image
-        volume_mounts {
-          name       = "secret"
-          mount_path = "/mnt/secrets/${var.service_name}-${var.env}-secret"
-        }
         env {
           name  = "ENV"
           value = var.env
@@ -137,14 +139,12 @@ resource "google_cloud_run_service" "app" {
           name  = "DATABASE_ID"
           value = google_firestore_database.database.id
         }
-      }
-      service_account_name = google_service_account.sa.email
-      volumes {
-        name = "secret"
-        secret {
-          secret_name = "${var.service_name}-${var.env}-secret"
+        env {
+          name  = "SECRET_ID"
+          value = google_secret_manager_secret.secret.id
         }
       }
+      service_account_name = google_service_account.sa.email
     }
   }
 }
