@@ -127,7 +127,7 @@ resource "google_cloud_run_service" "app" {
         image = var.image
         volume_mounts {
           name       = "secret"
-          mount_path = "/mnt/secrets/${google_secret_manager_secret.secret.name}"
+          mount_path = "/mnt/secrets/${google_secret_manager_secret.secret.id}"
         }
         env {
           name  = "ENV"
