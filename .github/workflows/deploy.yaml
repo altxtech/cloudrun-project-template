@@ -46,17 +46,20 @@ name: Build and Deploy to Cloud Run
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "main", "dev" ]
 
 jobs:
   deploy:
-    # Add 'id-token' with the intended permissions for workload identity federation
     permissions:
       contents: 'read'
       id-token: 'write'
 
     runs-on: ubuntu-latest
-    environment: dev
+    environment:  ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'prod'] }}
+    env:
+      registry: "${{ vars.GAR_LOCATION }}-docker.pkg.dev"
+      image_tag: "${{ vars.GAR_REPOSITORY_URI }}/${{ vars.SERVICE }}-${{ vars.ENV }}:${{ github.sha }}" 
+      tf_workspace: ${{ vars.TF_WORKSPACE }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -66,45 +69,41 @@ jobs:
         uses: 'google-github-actions/auth@v2'
         with:
           token_format: 'access_token'
-          workload_identity_provider: '${{ secrets.WIF_PROVIDER }}' # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
-          service_account: '${{ secrets.WIF_SERVICE_ACCOUNT }}' # e.g. - my-service-account@my-project.iam.gserviceaccount.com
+          workload_identity_provider: '${{ vars.WIF_PROVIDER }}' 
+          service_account: '${{ vars.WIF_SERVICE_ACCOUNT }}' 
 
-      # NOTE: Alternative option - authentication via credentials json
-      # - name: Google Auth
-      #   id: auth
-      #   uses: 'google-github-actions/auth@v0'
-      #   with:
-      #     credentials_json: '${{ secrets.GCP_CREDENTIALS }}''
-
-      # BEGIN - Docker auth and build (NOTE: If you already have a container image, these Docker steps can be omitted)
-
-      # Authenticate Docker to Google Cloud Artifact Registry
       - name: Docker Auth
         id: docker-auth
         uses: 'docker/login-action@v1'
         with:
           username: 'oauth2accesstoken'
           password: '${{ steps.auth.outputs.access_token }}'
-          registry: '${{ vars.GAR_LOCATION }}-docker.pkg.dev'
+          registry: ${{ env.registry }}
 
       - name: Build and Push Container
         run: |-
-          docker build -t "${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}" ./
-          docker push "${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}"
-
-      # END - Docker auth and Build
+          docker build -t "${{ env.image_tag }}" ./
+          docker push "${{ env.image_tag }}"
 
       - name: Tofu Setup
         uses: opentofu/setup-opentofu@v1
 
       - name: Tofu Init
-        run: tofu init
+        run: tofu init --backend-config "bucket=${{ vars.TF_BUCKET }}" --backend-config "prefix=${{ vars.TF_PREFIX }}"
 
       - name: Tofu Select Workspace
-        run: tofu workspace select --or-create ${{ vars.env }}
+        if: ${{ env.tf_workspace != '' }}
+        run: tofu workspace select --or-create ${{ vars.tf_workspace }}
 
       - name: Tofu Plan
-        run: tofu plan --var "project_id=${{ vars.PROJECT_ID }}" --var "region=${{ vars.REGION }}" --var "service_name=${{ vars.SERVICE }}" --var "env=${{ vars.env }}" --var "image=${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.SERVICE }}-${{ vars.ENV }}/${{ vars.SERVICE }}:${{ github.sha }}" --out tofu-plan
+        run: |
+          tofu plan \
+          --var "project_id=${{ vars.PROJECT_ID }}" \
+          --var "region=${{ vars.REGION }}" \
+          --var "service_name=${{ vars.SERVICE }}" \
+          --var "env=${{ vars.ENV }}" \
+          --var "image=${{ env.image_tag }}" \
+          --out tofu-plan
 
       - name: Tofu Apply
         run: tofu apply tofu-plan

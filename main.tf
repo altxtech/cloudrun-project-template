@@ -17,10 +17,7 @@ There should be a separate workflow to build, push and deploy the images.
 
 # backend
 terraform {
-  backend "gcs" {
-    bucket = "terraform-02947138"
-    prefix = "cloud-run-template"
-  }
+  backend "gcs" {}
 }
 
 # 1 VARIABLES
