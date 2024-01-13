@@ -55,7 +55,7 @@ jobs:
       id-token: 'write'
 
     runs-on: ubuntu-latest
-    environment:  ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'prod'] }}
+    environment:  ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'main'] }}
     env:
       registry: "${{ vars.GAR_LOCATION }}-docker.pkg.dev"
       image_tag: "${{ vars.GAR_REPOSITORY_URI }}/${{ vars.SERVICE }}-${{ vars.ENV }}:${{ github.sha }}" 
