@@ -48,10 +48,12 @@ on:
   push:
     branches: [ "main", "dev" ]
 
+environment: dev
+
 env:
   registry: "${{ vars.GAR_LOCATION }}-docker.pkg.dev"
   image_tag: "${{ vars.GAR_REPOSITORY_URI }}/${{ vars.SERVICE }}-${{ vars.ENV }}:${{ github.sha }}" 
-  tf_workspace: ${{ vars.TF_WORKSPACE }}
+  tf_workspace: ${{ env.TF_WORKSPACE }}
 
 jobs:
   deploy:
@@ -93,7 +95,7 @@ jobs:
 
       - name: Tofu Select Workspace
         if: ${{ env.tf_workspace != '' }}
-        run: tofu workspace select --or-create ${{ env.tf_workspace }}
+        run: tofu workspace select --or-create ${{ vars.tf_workspace }}
 
       - name: Tofu Plan
         run: |
