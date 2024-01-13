@@ -61,7 +61,7 @@ jobs:
     env:
       registry: "${{ vars.GAR_LOCATION }}-docker.pkg.dev"
       image_tag: "${{ vars.GAR_REPOSITORY_URI }}/${{ vars.SERVICE }}-${{ vars.ENV }}:${{ github.sha }}" 
-      tf_workspace: ${{ env.TF_WORKSPACE }}
+      tf_workspace: ${{ vars.TF_WORKSPACE }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
