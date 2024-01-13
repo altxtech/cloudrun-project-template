@@ -102,7 +102,7 @@ jobs:
           --var "region=${{ vars.REGION }}" \
           --var "service_name=${{ vars.SERVICE }}" \
           --var "env=${{ vars.ENV }}" \
-          --var "${{ vars.REPOSITORY_URI }}/${{ vars.SERVICE }}-${{ vars.ENV }}:${{ github.sha }}"
+          --var "image=${{ env.image_tag }}"
           --out tofu-plan
 
       - name: Tofu Apply
