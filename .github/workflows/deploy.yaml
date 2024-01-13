@@ -48,7 +48,8 @@ on:
   push:
     branches: [ "main", "dev" ]
 
-
+env:
+  environment: ${{ (github.ref_name == 'prod') && 'prod' || 'dev' }}
 
 jobs:
   deploy:
@@ -57,7 +58,7 @@ jobs:
       id-token: 'write'
 
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
+    environment: ${{ env.environment }}
     env:
       registry: "${{ vars.GAR_LOCATION }}-docker.pkg.dev"
       image_tag: "${{ vars.GAR_REPOSITORY_URI }}/${{ vars.SERVICE }}-${{ vars.ENV }}:${{ github.sha }}" 
@@ -104,7 +105,7 @@ jobs:
           --var "region=${{ vars.REGION }}" \
           --var "service_name=${{ vars.SERVICE }}" \
           --var "env=${{ vars.ENV }}" \
-          --var "image=${{ env.image_tag }}"
+          --var "image=${{ env.image_tag }}" \
           --out tofu-plan
 
       - name: Tofu Apply
