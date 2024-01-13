@@ -82,7 +82,7 @@ jobs:
 
       - name: Build and Push Container
         run: |-
-          docker build -t "${{ env.image_tag }" ./
+          docker build -t "${{ env.image_tag }}" ./
           docker push "${{ env.image_tag }}"
 
       - name: Tofu Setup
