@@ -92,7 +92,7 @@ jobs:
         run: tofu init --backend-config "bucket={{ vars.TF_BUCKET }}" --backend-config "prefix={{ vars.TF_PREFIX }}"
 
       - name: Tofu Select Workspace
-        if: {{ env.tf_workspace != '' }}
+        if: ${{ env.tf_workspace != '' }}
         run: tofu workspace select --or-create ${{ env.tf_workspace }}
 
       - name: Tofu Plan
