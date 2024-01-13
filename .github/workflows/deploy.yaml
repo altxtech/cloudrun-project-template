@@ -82,14 +82,14 @@ jobs:
 
       - name: Build and Push Container
         run: |-
-          docker build -t "{{ env.image_tag }" ./
-          docker push "{{ env.image_tag }}"
+          docker build -t "${{ env.image_tag }" ./
+          docker push "${{ env.image_tag }}"
 
       - name: Tofu Setup
         uses: opentofu/setup-opentofu@v1
 
       - name: Tofu Init
-        run: tofu init --backend-config "bucket={{ vars.TF_BUCKET }}" --backend-config "prefix={{ vars.TF_PREFIX }}"
+        run: tofu init --backend-config "bucket=${{ vars.TF_BUCKET }}" --backend-config "prefix=${{ vars.TF_PREFIX }}"
 
       - name: Tofu Select Workspace
         if: ${{ env.tf_workspace != '' }}
