@@ -58,7 +58,7 @@ jobs:
     environment:  ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'main'] }}
     env:
       registry: "${{ vars.GAR_LOCATION }}-docker.pkg.dev"
-      image_tag: "${{ vars.GAR_REPOSITORY_URI }}/${{ vars.SERVICE }}-${{ vars.ENV }}:${{ github.sha }}" 
+      image_tag: "${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ vars.GAR_REPOSITORY }}/${{ vars.SERVICE }}-${{ vars.ENV }}:${{ github.sha }}"
       tf_workspace: ${{ vars.TF_WORKSPACE }}
     steps:
       - name: Checkout
