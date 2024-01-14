@@ -44,6 +44,12 @@ variable "image" {
   description = "Image to deploy"
 }
 
+variable "secret_value"{
+	description = "Value to be set to the Secret Manager Secret"
+	default = "secret-data"
+	sensitive = true
+}
+
 # Configure the Google Cloud provider
 provider "google" {
   project = var.project_id
@@ -73,7 +79,7 @@ resource "google_secret_manager_secret" "secret" {
 resource "google_secret_manager_secret_version" "secret-version" {
   secret = google_secret_manager_secret.secret.id
 
-  secret_data = "secret-data"
+  secret_data = var.secret_value
 }
 
 data "google_iam_policy" "secret_access" {
