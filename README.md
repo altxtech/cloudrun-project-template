@@ -40,9 +40,9 @@ Second, create a provider
 ```bash
 gcloud iam workload-identity-pools providers create-oidc "github-actions" \
   --location="global" \
-  --workload-identity-pool="my-pool" \
+  --workload-identity-pool="ci-cd" \
   --display-name="Github Actions" \
-  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository"
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
   --issuer-uri="https://token.actions.githubusercontent.com"
 ```
 
