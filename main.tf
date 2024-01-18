@@ -161,7 +161,7 @@ resource "google_project_iam_binding" "db_access" {
 # Define a Google Cloud Run service
 resource "google_cloud_run_service" "app" {
   name     = "${var.service_name}-${var.env}"
-  location = var.region # Replace with your desired region
+  location = var.region 
 
   template {
     spec {
