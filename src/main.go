@@ -6,7 +6,7 @@ import (
 )
 
 func helloWorld(c *gin.Context){
-	c.String(http.StatusOK, "Hello. This is the updated version")
+	c.String(http.StatusOK, "Hello. Your Cloud Run App is running!")
 }
 
 func main() {
