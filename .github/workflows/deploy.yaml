@@ -57,6 +57,7 @@ jobs:
           --var "region=${{ vars.REGION }}" \
           --var "service_name=${{ vars.SERVICE }}" \
           --var "env=${{ vars.ENV }}" \
+          --var "gcloud_access_token=this-wont-work" \
           --out tofu-plan
 
       - name: Tofu Apply
