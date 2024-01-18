@@ -14,11 +14,9 @@
 # 3. Ensure the required IAM permissions are granted
 # 4. Configure Environment Variables for repository
 
-name: Build and Deploy to Cloud Run through OpenTofu
+name: Decommission Environment
 
-on:
-  push:
-    branches: [ "main", "dev" ]
+on: workflow_dispatch
 
 jobs:
   deploy:
@@ -52,14 +50,9 @@ jobs:
 
       - name: Tofu Plan
         run: |
-          tofu plan \
+          tofu destroy \
           --var "project_id=${{ vars.PROJECT_ID }}" \
           --var "region=${{ vars.REGION }}" \
           --var "service_name=${{ vars.SERVICE }}" \
           --var "env=${{ vars.ENV }}" \
           --var "gcloud_access_token=${{ env.steps.auth.outputs.access_token }}" \                             
-          --out tofu-plan
-
-      - name: Tofu Apply
-        run: tofu apply tofu-plan
-
