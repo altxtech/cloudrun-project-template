@@ -83,10 +83,13 @@ resource "google_artifact_registry_repository" "repo" {
 
 # 2.2 BUILD AND PUSH IMAGE
 resource "docker_image" "build_image" {
-  name = "${var.region}-docker.pkg.dev/${var.project_id}/${var.service_name}-${var.env}/${var.service_name}-${var.env}:1.0"
+  name = "${var.region}-docker.pkg.dev/${var.project_id}/${var.service_name}-${var.env}/${var.service_name}-${var.env}"
 
   build {
-    context = "${path.cwd}"
+    context = "${path.cwd}/src"
+  }
+  triggers = {
+    dir_sha1 = sha1(join("", [for f in fileset(path.module, "src/*") : filesha1(f)]))
   }
 }
 
