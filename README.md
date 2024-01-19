@@ -205,3 +205,12 @@ The service will be deployed with the `ENV`, `SECRET_ID` and `DATABASE_ID` envir
 ## Modifying the Secret Value
 
 The secret will be deployed with a default 'secret-data' value. You can modify this value after deploymenth through the GCP console or the gcloud cli. If you instead prefer to set these secret values at deploymeht, you can can modify the deploy.sh file, inthe `Tofu Plan` step, to include a `--var "secret_value=${{ secrets.< your secret name > }}"`, then set said secret as repository or environment secret. 
+
+## Additional Workflows
+There are some on-demand helpful workflows you can run:
+- Deploy with force Docker build
+	Use this workload if you want to force the Docker Image rebuild and push without needing to update the source code 
+- Destroy
+	Decomission your environment
+- Force unlock
+	Unlock a TF Lock

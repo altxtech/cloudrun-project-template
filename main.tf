@@ -57,6 +57,12 @@ variable "gcloud_access_token" {
 	sensitive = true
 }
 
+variable "force_docker_build" {
+	description = "Forces the docker build step"
+	type = bool
+	default = false
+}
+
 # 1.2 PROVIDERS
 provider "google" {
   project = var.project_id
@@ -89,7 +95,7 @@ locals {
 }
 
 resource "terraform_data" "build_image" {
-	triggers_replace = [local.src_sha]
+	triggers_replace = [local.src_sha, var.force_docker_build]
 
 	provisioner "local-exec" {
 		command = "docker build --tag ${local.image_tag} src"
@@ -101,6 +107,7 @@ resource "docker_registry_image" "image" {
   name = local.image_tag
   triggers = {
 	  "source_code_changes" = local.src_sha
+	  "force_docker_build" = var.force_docker_build
   }
 }
 # 2.3 SERVICE ACCOUNT
