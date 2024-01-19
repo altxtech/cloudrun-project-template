@@ -39,6 +39,9 @@ jobs:
           token_format: 'access_token'
           workload_identity_provider: '${{ vars.WIF_PROVIDER }}' 
           service_account: '${{ vars.WIF_SERVICE_ACCOUNT }}' 
+      
+      - run: echo $PWD
+      - run: ls -a
 
       - name: Tofu Setup
         uses: opentofu/setup-opentofu@v1
