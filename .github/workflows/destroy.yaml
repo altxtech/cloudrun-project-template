@@ -50,9 +50,9 @@ jobs:
 
       - name: Tofu Destroy
         run: |
-          tofu destroy \
+          tofu destroy --auto-approve \
           --var "project_id=${{ vars.PROJECT_ID }}" \
           --var "region=${{ vars.REGION }}" \
           --var "service_name=${{ vars.SERVICE }}" \
           --var "env=${{ vars.ENV }}" \
-          --var "gcloud_access_token=${{ env.steps.auth.outputs.access_token }}" \                             
+          --var "gcloud_access_token=${{ env.steps.auth.outputs.access_token }}"                             

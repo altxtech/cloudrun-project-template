@@ -1,13 +1,7 @@
 
 name: Deploy with force Docker build
 
-on:
-  workflow_dispatch:
-    inputs:
-      lock_id:
-        description: 'TF Lock ID'
-        required: true
-        type: string
+on: workflow_dispatch
 
 jobs:
   deploy:
