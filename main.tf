@@ -15,12 +15,18 @@ There should be a separate workflow to build, push and deploy the images.
 
 */
 
-# backend
+# 1.0 BACKEND
 terraform {
-  backend "gcs" {}
+ backend "gcs" {}
+ required_providers {
+	 docker = {
+		 source  = "kreuzwerker/docker"
+		 version = "3.0.2"
+	 }
+ }
 }
 
-# 1 VARIABLES
+# 1.1 VARIABLES
 
 variable "project_id" {
   description = "Google Cloud Project ID"
@@ -40,33 +46,71 @@ variable "env" {
   default     = "dev"
 }
 
-variable "image" {
-  description = "Image to deploy"
-}
-
 variable "secret_value"{
 	description = "Value to be set to the Secret Manager Secret"
 	default = "secret-data"
 	sensitive = true
 }
 
-# Configure the Google Cloud provider
+variable "gcloud_access_token" {
+	description = "Access token of the gcloud CLI. Needed for docker auth"
+	sensitive = true
+}
+
+# 1.2 PROVIDERS
 provider "google" {
   project = var.project_id
   region  = var.region
 }
 
+provider "docker" {
+	host = "unix:///var/run/docker.sock"
+	registry_auth {
+	  address = "${var.region}-docker.pkg.dev"
+	  username = "oauth2accesstoken"
+	  password = var.gcloud_access_token
+	}
+}
 
 # 2 RESOURCES
 
-# 2.1 SERVICE ACCOUNT
+# 2.1 ARTIFACT REGISTRY REPO
+resource "google_artifact_registry_repository" "repo" {
+  location      = var.region
+  repository_id = "${var.service_name}-${var.env}"
+  format        = "DOCKER"
+}
+
+
+# 2.2 BUILD AND PUSH IMAGE
+locals {
+	src_sha = sha1(join("", [for f in fileset(path.cwd, "src/*") : filesha1(f)]))
+	image_tag =  "${var.region}-docker.pkg.dev/${var.project_id}/${var.service_name}-${var.env}/${var.service_name}-${var.env}"
+}
+
+resource "terraform_data" "build_image" {
+	triggers_replace = [local.src_sha]
+
+	provisioner "local-exec" {
+		command = "docker build --tag ${local.image_tag} src"
+	}
+}
+
+resource "docker_registry_image" "image" {
+  depends_on = [terraform_data.build_image]
+  name = local.image_tag
+  triggers = {
+	  "source_code_changes" = local.src_sha
+  }
+}
+# 2.3 SERVICE ACCOUNT
 
 resource "google_service_account" "sa" {
   account_id   = "${var.service_name}-${var.env}-svc"
   display_name = "Service account for cloud run"
 }
 
-# 2.2 SECRET
+# 2.4 SECRET
 
 resource "google_secret_manager_secret" "secret" {
   secret_id = "${var.service_name}-${var.env}-secret"
@@ -86,19 +130,18 @@ data "google_iam_policy" "secret_access" {
   binding {
     role = "roles/secretmanager.secretAccessor"
     members = [
-      "serviceAccount:${google_service_account.sa.email}",
+
     ]
   }
 }
 
 resource "google_secret_manager_secret_iam_policy" "policy" {
-  project     = var.project_id
   secret_id   = google_secret_manager_secret.secret.name
   policy_data = data.google_iam_policy.secret_access.policy_data
 }
 
 
-# 2.3 DATABASE
+# 2.5 DATABASE
 
 resource "google_firestore_database" "database" {
   project                 = var.project_id
@@ -127,13 +170,13 @@ resource "google_project_iam_binding" "db_access" {
 # Define a Google Cloud Run service
 resource "google_cloud_run_service" "app" {
   name     = "${var.service_name}-${var.env}"
-  location = var.region # Replace with your desired region
+  location = var.region 
 
   template {
     spec {
       containers {
 
-        image = var.image
+        image = docker_registry_image.image.name
         env {
           name  = "ENV"
           value = var.env
@@ -153,7 +196,7 @@ resource "google_cloud_run_service" "app" {
 }
 
 /*
-# 2.6 EXPOSE THE SERVICE
+# 2.7 EXPOSE THE SERVICE
 
 # This block will make the service public
 # Uncomment this block for public facing services or testing enviroments
