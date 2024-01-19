@@ -5,7 +5,7 @@ FROM golang:1.21 AS build
 WORKDIR /app
 
 # Copy the Go source code into the container
-COPY src/ .
+COPY . .
 
 # Build the Go application
 RUN CGO_ENABLED=0 GOOS=linux go build -o app
