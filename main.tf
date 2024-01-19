@@ -81,20 +81,26 @@ resource "google_artifact_registry_repository" "repo" {
   format        = "DOCKER"
 }
 
-# 2.2 BUILD AND PUSH IMAGE
-resource "docker_image" "build_image" {
-  name = "${var.region}-docker.pkg.dev/${var.project_id}/${var.service_name}-${var.env}/${var.service_name}-${var.env}"
 
-  build {
-    context = "${path.cwd}/src"
-  }
-  triggers = {
-    dir_sha1 = sha1(join("", [for f in fileset(path.cwd, "src/*") : filesha1(f)]))
-  }
+# 2.2 BUILD AND PUSH IMAGE
+locals {
+	src_sha = sha1(join("", [for f in fileset(path.cwd, "src/*") : filesha1(f)]))
+	image_tag =  "${var.region}-docker.pkg.dev/${var.project_id}/${var.service_name}-${var.env}/${var.service_name}-${var.env}"
+}
+
+resource "terraform_data" "build_image" {
+	triggers_replace = [local.src_sha]
+
+	provisioner "local-exec" {
+		command = "docker build ${local.image_tag} src"
+	}
 }
 
 resource "docker_registry_image" "image" {
-  name = docker_image.build_image.name
+  name = local.image_tag
+  triggers = {
+	  "source_code_changes" = local.src_sha
+  }
 }
 # 2.3 SERVICE ACCOUNT
 
