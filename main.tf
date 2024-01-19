@@ -129,7 +129,6 @@ data "google_iam_policy" "secret_access" {
 }
 
 resource "google_secret_manager_secret_iam_policy" "policy" {
-  project     = var.project_id
   secret_id   = google_secret_manager_secret.secret.name
   policy_data = data.google_iam_policy.secret_access.policy_data
 }
