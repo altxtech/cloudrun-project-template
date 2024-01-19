@@ -89,7 +89,7 @@ resource "docker_image" "build_image" {
     context = "${path.cwd}/src"
   }
   triggers = {
-    dir_sha1 = sha1(join("", [for f in fileset(path.module, "src/*") : filesha1(f)]))
+    dir_sha1 = sha1(join("", [for f in fileset(path.module, "${path.cwd}/src/*") : filesha1(f)]))
   }
 }
 
