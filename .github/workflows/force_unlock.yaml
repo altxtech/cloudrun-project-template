@@ -1,0 +1,43 @@
+
+name: Force Unlock
+
+on:
+  workflow_dispatch:
+    inputs:
+      lock_id:
+        description: 'TF Lock ID'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    runs-on: ubuntu-latest
+    environment:  ${{ fromJSON('["dev", "prod"]')[github.ref_name == 'main'] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          token_format: 'access_token'
+          workload_identity_provider: '${{ vars.WIF_PROVIDER }}' 
+          service_account: '${{ vars.WIF_SERVICE_ACCOUNT }}' 
+
+      - name: Tofu Setup
+        uses: opentofu/setup-opentofu@v1
+
+      - name: Tofu Init
+        run: tofu init --backend-config "bucket=${{ vars.TF_BUCKET }}" --backend-config "prefix=${{ vars.TF_PREFIX }}"
+
+      - name: Tofu Select Workspace
+        if: ${{ env.tf_workspace != '' }}
+        run: tofu workspace select --or-create ${{ vars.tf_workspace }}
+
+      - name: Tofu Force Unlock
+        run: tofu force-unlock ${{ inputs.lock_id }} 

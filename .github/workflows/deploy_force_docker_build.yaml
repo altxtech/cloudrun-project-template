@@ -1,22 +1,13 @@
-# This workflow build and push a Docker container to Google Artifact Registry and deploy it on Cloud Run when a commit is pushed to the "main" branch
-#
-# Overview:
-#
-# 1. Authenticate to Google Cloud
-# 2. Setup OpenTofu
-# 3. Initialize Tofu and select workspace
-# 4. Plan and apply changes
-#
-# To configure this workflow:
-#
-# 1. Ensure the required Google Cloud APIs are enabled:
-# 2. Create and configure Workload Identity Federation for GitHub (https://github.com/google-github-actions/auth#setting-up-workload-identity-federation)
-# 3. Ensure the required IAM permissions are granted
-# 4. Configure Environment Variables for repository
 
-name: Destroy
+name: Deploy with force Docker build
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      lock_id:
+        description: 'TF Lock ID'
+        required: true
+        type: string
 
 jobs:
   deploy:
@@ -48,11 +39,16 @@ jobs:
         if: ${{ env.tf_workspace != '' }}
         run: tofu workspace select --or-create ${{ vars.tf_workspace }}
 
-      - name: Tofu Destroy
+      - name: Tofu Plan
         run: |
-          tofu destroy \
+          tofu plan \
           --var "project_id=${{ vars.PROJECT_ID }}" \
           --var "region=${{ vars.REGION }}" \
           --var "service_name=${{ vars.SERVICE }}" \
           --var "env=${{ vars.ENV }}" \
-          --var "gcloud_access_token=${{ env.steps.auth.outputs.access_token }}" \                             
+          --var "gcloud_access_token=${{ steps.auth.outputs.access_token }}" \
+          --var "force_docker_build=true" \
+          --out tofu-plan
+
+      - name: Tofu Apply
+        run: tofu apply tofu-plan

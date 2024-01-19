@@ -57,6 +57,12 @@ variable "gcloud_access_token" {
 	sensitive = true
 }
 
+variable "force_docker_build" {
+	description = "Forces Docker Build step"
+	type = bool
+	default = false
+}
+
 # 1.2 PROVIDERS
 provider "google" {
   project = var.project_id

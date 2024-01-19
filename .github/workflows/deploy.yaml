@@ -14,7 +14,7 @@
 # 3. Ensure the required IAM permissions are granted
 # 4. Configure Environment Variables for repository
 
-name: Build and Deploy to Cloud Run through OpenTofu
+name: Deploy
 
 on:
   push:
