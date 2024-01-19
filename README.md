@@ -26,7 +26,16 @@ After creating a new repository from this template, follow this steps to configu
 
 You can read more on this on Google Blog's on [Enabling Keyless Authentication from Github Actions](https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions)  
 
-On this step, we're going create a workload identity pool and provider.  
+On this step, we're going to create service account for Github Actions, and then give GH permissions to impersonate this account with
+Workload Identity Federation (WIF).
+
+Create a Service Account
+```bash
+WIF_SERVICE_NAME=[Name for the account]
+gcloud iam service-accounts create $WIF_SERVICE_ACCOUNT_NAME \
+    --description="Devops account for Cloud Run projects" \
+    --display-name="Devops Service Account for Cloud Run"
+```
 
 Create a Wokload Indentity pool
 ```bash
@@ -45,81 +54,96 @@ gcloud iam workload-identity-pools providers create-oidc "github-actions" \
   --issuer-uri="https://token.actions.githubusercontent.com"
 ```
 
-You can then, print the workload identity pool name with:
+You can then, print the workload identity pool name with. We need it for the next step.
 ```bash
 gcloud iam workload-identity-pools describe ci-cd --location global
 ```
 
-### 2. Prepare a Service Accountk
-
-First setup a these variables. These are example values. Fill in with your actual values.
-```bash
-PROJECT_ID=my-project-id
-WIF_POOL=projects/123456789/locations/global/workloadIdentityPools/ci-cd
-WIF_SERVICE_ACCOUNT_NAME=devops-svc
-TF_BUCKET=my-tf-bucket-12438709
-GH_REPO=altxtech/cloudrun-project-template
+Finally, give Github Actions access to impersonate this account.
+```
+WIF_POOL=[Resource name of the pool]
+PROJECT_ID=[Id of your project]
+GH_REPO=[Your repository name, in the format your-org/your-repo] 
+gcloud iam service-accounts add-iam-policy-binding "${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --project="${PROJECT_ID}" \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="principalSet://iam.googleapis.com/${WIF_POOL}/attribute.repository/${GH_REPO}"
 ```
 
-Create a Service Account
-```bash
-gcloud iam service-accounts create $WIF_SERVICE_ACCOUNT_NAME \
-    --description="Devops account for Cloud Run projects" \
-    --display-name="Devops Service Account for Cloud Run"
-```
+### 2. Give the Service Account permissions
 
-Give the Service Account permissions to manage the required infrastructure (Artifact Registry, Cloud Run, Firestore, Secrets Manager, IAM Service Accounts and Project IAM.
+Github Actions now has an account it can impersonate, but this account itself has no permissions.
+
+We need to give it permissions to manage the required infrastructure.
+
+Artifact Registry:
 ```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role="roles/artifactregistry.admin" \
 	--condition=None
+```
 
+Secret Manager:
+```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role="roles/secretmanager.admin" \
 	--condition=None
 
+```
+
+Firestore:
+```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role="roles/datastore.owner" \
 	--condition=None
 
+```
+
+IAM Service Accounts:
+```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role="roles/iam.serviceAccountUser" \
 	--condition=None
 
+```
+
+```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role="roles/iam.serviceAccountAdmin" \
 	--condition=None
 
+```
+
+Resource Manager:
+```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role="roles/resourcemanager.projectIamAdmin" \
 	--condition=None
 
+```
+
+Cloud Run:
+```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role="roles/run.admin" \
 	--condition=None
 ```
 
-Give the service account access to manage state in the TF Bucket.
+And also give the service account access to manage state in the TF Bucket.
 ```	
+TF_BUCKET=[Your TF bucket name]
 gcloud storage buckets add-iam-policy-binding gs://${TF_STATE_BUCKET} \
         --member="serviceAccount:${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
         --role=roles/storage.objectUser
 ```
 
-Finally, give Github Actions access to impersonate this account.
-```
-gcloud iam service-accounts add-iam-policy-binding "${WIF_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --project="${PROJECT_ID}" \
-  --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/${WIF_POOL}/attribute.repository/${GH_REPO}"
-```
 
 **Recommended**: Do this step twice, one for `dev` and other `prod`. Use different projects, GCS buckets ans service accounts
 
@@ -169,9 +193,6 @@ gcloud iam service-accounts add-iam-policy-binding "${WIF_SERVICE_ACCOUNT_NAME}@
   - **Name:** `WIF_SERVICE_ACCOUNT`
   - **Description:** Workload Identity Federation configuration. Recommended to have separate configuration for each environment.
   - **Example:** `devops-svc@my-project-dev.iam.gserviceaccount.com`
-
-Example configuration:  
-![configuration](example-config.png)
 
 ## Dev and Prod environments
 
