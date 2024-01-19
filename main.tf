@@ -92,7 +92,7 @@ resource "terraform_data" "build_image" {
 	triggers_replace = [local.src_sha]
 
 	provisioner "local-exec" {
-		command = "docker build ${local.image_tag} src"
+		command = "docker build --tag ${local.image_tag} src"
 	}
 }
 
