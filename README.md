@@ -208,9 +208,9 @@ The secret will be deployed with a default 'secret-data' value. You can modify t
 
 ## Additional Workflows
 There are some on-demand helpful workflows you can run:
-- Deploy with force Docker build
-	Use this workload if you want to force the Docker Image rebuild and push without needing to update the source code 
-- Destroy
-	Decomission your environment
-- Force unlock
-	Unlock a TF Lock
+- **Deploy with force Docker build***
+	- Use this workload if you want to force the Docker Image rebuild and push without needing to update the source code.
+- **Destroy**
+	- Decomission your environment.
+- **Force unlock**
+	Unlock a TF State Lock. Useful you have to cancel a deployment before it finishes, and you need to unlock the state to try to deploy again.
