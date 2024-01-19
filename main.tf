@@ -97,6 +97,7 @@ resource "terraform_data" "build_image" {
 }
 
 resource "docker_registry_image" "image" {
+  depends_on = [terraform_data.build_image]
   name = local.image_tag
   triggers = {
 	  "source_code_changes" = local.src_sha
