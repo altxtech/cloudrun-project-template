@@ -18,7 +18,11 @@ name: Deploy
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches:
+      - "main"
+      - "dev"
+    paths:
+      - "src/*"
 
 jobs:
   deploy:

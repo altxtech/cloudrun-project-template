@@ -207,10 +207,13 @@ The service will be deployed with the `ENV`, `SECRET_ID` and `DATABASE_ID` envir
 The secret will be deployed with a default 'secret-data' value. You can modify this value after deploymenth through the GCP console or the gcloud cli. If you instead prefer to set these secret values at deploymeht, you can can modify the deploy.sh file, inthe `Tofu Plan` step, to include a `--var "secret_value=${{ secrets.< your secret name > }}"`, then set said secret as repository or environment secret. 
 
 ## Additional Workflows
-There are some on-demand helpful workflows you can run:
-- **Deploy with force Docker build***
-	- Use this workload if you want to force the Docker Image rebuild and push without needing to update the source code.
-- **Destroy**
-	- Decomission your environment.
-- **Force unlock**
-	Unlock a TF State Lock. Useful you have to cancel a deployment before it finishes, and you need to unlock the state to try to deploy again.
+There are two more additional workflows you might want to use from time to time.
+
+### Force Unlock
+This workflow will unlok a TF State lock. If you cancel a deployment job after the environment entered a locked state, it is possible that the environment will
+be stuck at said locked state and you won't be able to do any subsequent deployment attempts.  
+
+In that case, get the get the Lock ID from the Deploy job error logs and pass it into the Force Unlock workflow and you will be able to deploy again.
+
+### Destroy
+For when you no longer need your app, delete all the cloud resources.
