@@ -6,7 +6,7 @@ import (
 )
 
 func helloWorld(c *gin.Context){
-	c.String(http.StatusOK, "Your Cloud Run app was deployed successfully.")
+	c.String(http.StatusOK, "Your Cloud Run app was deployed successfully!")
 }
 
 func main() {
